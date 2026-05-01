@@ -1,0 +1,106 @@
+define(['jquery'], function($){
+	var library = {
+		nav_incourse: function(){
+			$(".library-nav-group .library-nav-body input").keyup(function(){
+				var value = $(this).val().toUpperCase();
+				$(".library-nav-group .library-nav-body ul li").each(function(i, e){
+					var content = $(e).html().replace(/(<([^>]+)>)/ig,"").toUpperCase();
+					if(content.indexOf(value) > -1){
+						$(e).show();
+					}else{
+						$(e).hide();
+					}
+				});
+				return false;
+			});
+			$(".library-nav-group .library-nav-body .btn").off('click').click(function(){
+				library.modale.init().show($(this).attr('data-id'));
+				return false;
+			});
+		},
+		ajax: function(url, data, callback){
+			$.ajax({
+				data: data,
+				url: url,
+				type: 'post',
+				beforeSend: function () {
+					var html = '';
+					html += '<div class="library-preload">';
+						html += '<span></span>';
+						html += '<span></span>';
+						html += '<span></span>';
+						html += '<span></span>';
+						html += '<span></span>';
+						html += '<span></span>';
+					html += '</div>';
+					(callback)(html);
+				},
+				success: function(response){
+					(callback)(response);
+				}
+			});
+		},
+		modale: {
+			margen: 15,
+			init: function(){
+				var html = '';
+				html += '<div class="library-modale">';
+					html += '<div class="library-body">';
+						html += '<div class="library-header">';
+							html += '<h2>Recurso</h2>';
+							html += '<a class="library-close" href="#">Cerrar</a>';
+						html += '</div>';
+						html += '<div class="library-wrap">';
+							html += '<div class="library-scroll"></div>';
+						html += '</div>';
+					html += '</div>';
+				html += '</div>';
+				$('body').append(html);
+				$('html, body').css({'overflow': 'hidden', 'height': '100%'});
+				$(document).keyup(function(e){
+					if(e.keyCode === 27){
+						library.modale.remove();
+					}
+				});
+				$(".library-modale .library-close").off('click').click(function(){
+					library.modale.remove();
+					return false;
+				});
+				$(window).off('resize').resize(library.modale.resize);
+				return library.modale;
+			},
+			show: function(idbook){
+				library.ajax("https://campusecore.newfieldconsulting.com/local/library/ajax.php", {
+					id: idbook
+				}, function(response){
+					$(".library-modale .library-body .library-wrap .library-scroll").html(response);
+					library.modale.resize();
+				});
+				return library.modale;
+			},
+			remove: function(){
+				$(".library-modale").remove();
+				$('html, body').css({'overflow': 'auto', 'height': 'auto'});
+			},
+			resize: function(){
+				var altoWindows = $(".library-modale").height();
+				var altoModale = $(".library-modale .library-body").outerHeight();
+				
+				if(altoModale+(library.modale.margen*2) >= altoWindows){
+					altoModale = altoWindows-(library.modale.margen*2);
+					$(".library-modale .library-body").css("height", altoModale+"px");
+				}else{
+					$(".library-modale .library-body").css("height", "");
+				}
+				
+				var margenTop = (altoWindows - altoModale)/2;
+				if(margenTop <= library.modale.margen){
+					margenTop = library.modale.margen;
+				}
+				
+				$(".library-modale .library-body").css("margin-top", margenTop+"px");
+			}
+		}
+	};
+    return library;
+});
